@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { AlertTriangle, ExternalLink, X, CheckCircle2 } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import type { DashboardView } from '../components/Sidebar';
 import { OverviewPage } from '../features/overview/OverviewPage';
@@ -66,6 +67,10 @@ export function DashboardApp() {
   const [syncStatus, setSyncStatus] = useState<SyncStatusType>('local');
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
 
+  const [isExtensionActive, setIsExtensionActive] = useState<boolean>(() => tabService.isExtensionAvailable());
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => tabService.getDemoMode());
+  const [showInstallModal, setShowInstallModal] = useState<boolean>(false);
+
   // Duplicates
   const [exactGroups, setExactGroups] = useState<DuplicateGroup[]>([]);
   const [likelyGroups, setLikelyGroups] = useState<DuplicateGroup[]>([]);
@@ -106,6 +111,9 @@ export function DashboardApp() {
       setPreferences(prefs);
       setStorageUsage(storageEst);
 
+      setIsExtensionActive(tabService.isExtensionAvailable());
+      setIsDemoMode(tabService.getDemoMode());
+
       settingsService.applyTheme(prefs.theme);
 
       // Duplicates scan
@@ -129,6 +137,42 @@ export function DashboardApp() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Live listen for Chrome tab and window changes
+  useEffect(() => {
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+      const handleTabChange = () => {
+        loadData();
+      };
+      chrome.tabs.onCreated.addListener(handleTabChange);
+      chrome.tabs.onUpdated.addListener(handleTabChange);
+      chrome.tabs.onRemoved.addListener(handleTabChange);
+      if (chrome.windows) {
+        chrome.windows.onCreated.addListener(handleTabChange);
+        chrome.windows.onRemoved.addListener(handleTabChange);
+      }
+      return () => {
+        chrome.tabs.onCreated.removeListener(handleTabChange);
+        chrome.tabs.onUpdated.removeListener(handleTabChange);
+        chrome.tabs.onRemoved.removeListener(handleTabChange);
+        if (chrome.windows) {
+          chrome.windows.onCreated.removeListener(handleTabChange);
+          chrome.windows.onRemoved.removeListener(handleTabChange);
+        }
+      };
+    }
+  }, [loadData]);
+
+  const handleToggleDemoMode = async () => {
+    const nextMode = !isDemoMode;
+    tabService.setDemoMode(nextMode);
+    setIsDemoMode(nextMode);
+    await loadData();
+    showToast(
+      nextMode ? 'Demo preview mode enabled with sample tabs' : 'Demo mode exited (no sample tabs)',
+      'info'
+    );
+  };
 
   // Execute Search
   useEffect(() => {
@@ -547,6 +591,55 @@ export function DashboardApp() {
         />
       ) : (
         <>
+          {!isExtensionActive && (
+            <div className="bg-amber-950/40 border border-amber-500/30 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 mt-0.5 shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm text-amber-200">
+                    Standalone Web Preview Mode
+                  </h4>
+                  <p className="text-xs text-amber-300/80 mt-0.5 max-w-2xl leading-relaxed">
+                    Browser security prevents hosted web pages (<code className="bg-amber-950/60 px-1 py-0.5 rounded text-amber-200 font-mono">vercel.app</code>) from scraping or viewing your open browser tabs and windows.
+                    To scrape and manage your real Chrome tabs, install the TabPilot extension in <code className="bg-amber-950/60 px-1 py-0.5 rounded text-amber-200 font-mono">chrome://extensions</code>.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                <button
+                  onClick={handleToggleDemoMode}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 transition-colors"
+                >
+                  {isDemoMode ? 'Exit Demo Mode' : 'Explore Demo Tabs'}
+                </button>
+                <button
+                  onClick={() => setShowInstallModal(true)}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-colors flex items-center gap-1.5"
+                >
+                  <span>Extension Setup Guide</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isDemoMode && (
+            <div className="bg-blue-950/40 border border-blue-500/30 rounded-lg px-3.5 py-2 mb-6 flex items-center justify-between text-xs text-blue-200">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                <span>Showing 6 sample demo tabs across 2 windows for interface evaluation.</span>
+              </div>
+              <button
+                onClick={handleToggleDemoMode}
+                className="underline hover:text-white transition-colors"
+              >
+                Clear Demo Tabs
+              </button>
+            </div>
+          )}
+
           {currentView === 'overview' && (
             <OverviewPage
               openTabs={openTabs}
@@ -575,6 +668,9 @@ export function DashboardApp() {
                 showToast(`Grouped ${tabIds.length} tabs`, 'success');
               }}
               onRefresh={loadData}
+              isExtensionActive={isExtensionActive}
+              isDemoMode={isDemoMode}
+              onToggleDemoMode={handleToggleDemoMode}
             />
           )}
 
@@ -672,6 +768,79 @@ export function DashboardApp() {
             />
           )}
         </>
+      )}
+
+      {showInstallModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                <span>Scrape Real Browser Tabs with Extension</span>
+              </h3>
+              <button
+                onClick={() => setShowInstallModal(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Standard web browsers prevent websites from scraping or reading your tabs for privacy and security. TabPilot is packaged as a high-performance Manifest V3 extension to manage all your active browser windows and tabs:
+            </p>
+
+            <div className="space-y-3 bg-slate-50 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+              <div className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">1</span>
+                <div>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">Download or Build Extension</span>
+                  <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+                    Download the prebuilt extension zip from GitHub releases or run <code className="font-mono text-blue-500">npm run package:extension</code>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">2</span>
+                <div>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">Open Extensions in Chrome</span>
+                  <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+                    Navigate to <code className="font-mono text-blue-500">chrome://extensions</code> in your Chrome address bar and enable <strong>Developer mode</strong> in the top-right.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0">3</span>
+                <div>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">Load Unpacked</span>
+                  <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
+                    Click <strong>Load unpacked</strong> and select the unzipped folder (or the project <code className="font-mono text-blue-500">dist/</code> folder). TabPilot will immediately scrape all your open windows and tabs!
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => {
+                  setShowInstallModal(false);
+                  handleToggleDemoMode();
+                }}
+                className="px-3.5 py-2 text-xs font-medium rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-850 transition-colors"
+              >
+                Explore Demo Tabs Instead
+              </button>
+              <button
+                onClick={() => setShowInstallModal(false)}
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+              >
+                Got It
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </AppShell>
   );

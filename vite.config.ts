@@ -18,11 +18,15 @@ export default defineConfig({
         popup: resolve(__dirname, 'popup.html'),
         dashboard: resolve(__dirname, 'dashboard.html'),
         background: resolve(__dirname, 'src/background/service-worker.ts'),
+        content: resolve(__dirname, 'src/content/content-bridge.ts'),
       },
       output: {
         entryFileNames: (chunkInfo) => {
           if (chunkInfo.name === 'background') {
             return 'service-worker.js';
+          }
+          if (chunkInfo.name === 'content') {
+            return 'content-bridge.js';
           }
           return 'assets/[name]-[hash].js';
         },

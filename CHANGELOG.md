@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] - 2026-10-13
+
+### Fixed
+- **Real Chrome Tab & Window Scraping**: Replaced mock tabs fallback with genuine browser tab scraping via `chrome.windows.getAll({ populate: true })` and `chrome.tabs.query()`.
+- **Eliminated Fake/Random Tabs**: Ensured hosted web pages never show hardcoded mock tabs disguised as real tabs; returns empty state unless demo mode is explicitly enabled.
+- **Handling Navigating / Pending Tabs**: Tab URLs now resolve `tab.url || tab.pendingUrl` to prevent blank or missing titles during page loads.
+
+### Added
+- **Content Script Extension Bridge**: Added `content-bridge.js` to automatically relay tab queries between hosted dashboards (`localhost`, `*.vercel.app`) and the extension service worker.
+- **Web Preview Mode Banner & Guide**: Added informative security notification and setup modal explaining browser sandbox restrictions with step-by-step instructions for loading into Chrome.
+- **Explicit Demo Mode**: Added toggleable demo preview mode allowing users to explore the dashboard layout with sample tabs on demand.
+- **Real-Time Tab Event Listeners**: Added live listeners for `chrome.tabs.onCreated`, `onUpdated`, `onRemoved`, and `chrome.windows` events.
+
+---
+
 ## [1.0.0] - 2026-10-13
 
 ### Added

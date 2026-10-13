@@ -17,6 +17,9 @@ export interface ITabsAdapter {
   getRecentlyClosed(maxResults?: number): Promise<chrome.sessions.Session[]>;
   restoreRecentlyClosed(sessionId: string): Promise<chrome.sessions.Session | null>;
   extractPageContent(tabId: number): Promise<string | null>;
+  isAvailable?(): boolean;
+  setDemoMode?(enabled: boolean): void;
+  getDemoMode?(): boolean;
 }
 
 export class ChromeTabsAdapter implements ITabsAdapter {
@@ -83,16 +86,46 @@ export class ChromeTabsAdapter implements ITabsAdapter {
     },
   ];
 
-  private isAvailable(): boolean {
-    return typeof chrome !== 'undefined' && typeof chrome.tabs !== 'undefined';
+  private isDemoMode: boolean = false;
+  private bridgeReady: boolean = false;
+
+  constructor() {
+    this.initBridgeListener();
   }
 
-  private mapTab(tab: chrome.tabs.Tab): BrowserTab {
+  private initBridgeListener(): void {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('message', (event) => {
+        if (event.data?.source === 'TABPILOT_EXTENSION_BRIDGE' && event.data?.event === 'READY') {
+          this.bridgeReady = true;
+          logger.info('TabPilot extension bridge connected to web page');
+        }
+      });
+    }
+  }
+
+  public isAvailable(): boolean {
+    return (
+      (typeof chrome !== 'undefined' && typeof chrome.tabs !== 'undefined') ||
+      this.bridgeReady
+    );
+  }
+
+  public setDemoMode(enabled: boolean): void {
+    this.isDemoMode = enabled;
+  }
+
+  public getDemoMode(): boolean {
+    return this.isDemoMode;
+  }
+
+  public mapTab(tab: chrome.tabs.Tab): BrowserTab {
+    const rawUrl = tab.url || (tab as { pendingUrl?: string }).pendingUrl || '';
     return {
       id: tab.id || 0,
       windowId: tab.windowId || 0,
-      url: tab.url || '',
-      title: tab.title || 'Untitled',
+      url: rawUrl,
+      title: tab.title || (rawUrl ? rawUrl.replace(/^https?:\/\//, '') : 'Untitled'),
       favIconUrl: tab.favIconUrl || null,
       active: !!tab.active,
       pinned: !!tab.pinned,
@@ -105,34 +138,128 @@ export class ChromeTabsAdapter implements ITabsAdapter {
   }
 
   async queryTabs(queryInfo: chrome.tabs.QueryInfo = {}): Promise<BrowserTab[]> {
-    if (!this.isAvailable()) {
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+      return new Promise((resolve, reject) => {
+        chrome.tabs.query(queryInfo, (tabs) => {
+          if (chrome.runtime.lastError) {
+            return reject(new TabOperationError(chrome.runtime.lastError.message || 'Failed to query tabs'));
+          }
+          resolve((tabs || []).map((t) => this.mapTab(t)));
+        });
+      });
+    }
+
+    if (this.bridgeReady && typeof window !== 'undefined') {
+      try {
+        return await this.sendBridgeRequest<BrowserTab[]>('QUERY_TABS', queryInfo);
+      } catch (err) {
+        logger.warn('Bridge tab query failed:', err);
+      }
+    }
+
+    // Only return sample tabs if user explicitly turned on demo mode
+    if (this.isDemoMode) {
       return [...this.previewTabs];
     }
 
-    return new Promise((resolve, reject) => {
-      chrome.tabs.query(queryInfo, (tabs) => {
-        if (chrome.runtime.lastError) {
-          return reject(new TabOperationError(chrome.runtime.lastError.message || 'Failed to query tabs'));
-        }
-        resolve(tabs.map(this.mapTab));
+    // Default: return empty list so we NEVER show random fake tabs as real tabs
+    return [];
+  }
+
+  async getAllWindows(): Promise<chrome.windows.Window[]> {
+    if (typeof chrome !== 'undefined' && chrome.windows) {
+      return new Promise((resolve) => {
+        chrome.windows.getAll({ populate: true }, (windows) => {
+          if (chrome.runtime.lastError || !windows) {
+            logger.warn('Failed to scrape all windows:', chrome.runtime.lastError?.message);
+            resolve([]);
+          } else {
+            resolve(windows);
+          }
+        });
       });
+    }
+
+    if (this.isDemoMode) {
+      return [
+        {
+          id: 1,
+          focused: true,
+          incognito: false,
+          state: 'normal',
+          type: 'normal',
+          alwaysOnTop: false,
+          tabs: this.previewTabs.filter((t) => t.windowId === 1) as unknown as chrome.tabs.Tab[],
+        },
+        {
+          id: 2,
+          focused: false,
+          incognito: false,
+          state: 'normal',
+          type: 'normal',
+          alwaysOnTop: false,
+          tabs: this.previewTabs.filter((t) => t.windowId === 2) as unknown as chrome.tabs.Tab[],
+        },
+      ];
+    }
+
+    return [];
+  }
+
+  private sendBridgeRequest<T>(action: string, payload?: unknown): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const requestId = `req_${Date.now()}_${Math.random()}`;
+      const timeout = setTimeout(() => {
+        window.removeEventListener('message', handler);
+        reject(new TabOperationError('Bridge request timed out'));
+      }, 5000);
+
+      const handler = (event: MessageEvent) => {
+        if (
+          event.data?.source === 'TABPILOT_EXTENSION_BRIDGE' &&
+          event.data?.requestId === requestId
+        ) {
+          clearTimeout(timeout);
+          window.removeEventListener('message', handler);
+          if (event.data.error) {
+            reject(new TabOperationError(event.data.error));
+          } else {
+            resolve(event.data.response?.data || event.data.response || []);
+          }
+        }
+      };
+
+      window.addEventListener('message', handler);
+      window.postMessage(
+        {
+          source: 'TABPILOT_WEB_PAGE',
+          action,
+          payload,
+          requestId,
+        },
+        '*'
+      );
     });
   }
 
   async getTab(tabId: number): Promise<BrowserTab | null> {
-    if (!this.isAvailable()) {
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+      return new Promise((resolve) => {
+        chrome.tabs.get(tabId, (tab) => {
+          if (chrome.runtime.lastError || !tab) {
+            resolve(null);
+          } else {
+            resolve(this.mapTab(tab));
+          }
+        });
+      });
+    }
+
+    if (this.isDemoMode) {
       return this.previewTabs.find((t) => t.id === tabId) || null;
     }
 
-    return new Promise((resolve) => {
-      chrome.tabs.get(tabId, (tab) => {
-        if (chrome.runtime.lastError || !tab) {
-          resolve(null);
-        } else {
-          resolve(this.mapTab(tab));
-        }
-      });
-    });
+    return null;
   }
 
   async createTab(createProperties: chrome.tabs.CreateProperties): Promise<BrowserTab> {

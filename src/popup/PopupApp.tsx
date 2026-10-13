@@ -231,8 +231,15 @@ export function PopupApp() {
       {/* Tabs list */}
       <div className="flex-1 overflow-y-auto px-2.5 pb-2 space-y-1">
         {filteredTabs.length === 0 ? (
-          <div className="p-6 text-center text-xs text-slate-400">
-            No tabs found matching &quot;{searchQuery}&quot;
+          <div className="p-6 text-center text-xs text-slate-400 space-y-2">
+            <div>
+              {searchQuery ? `No tabs matching "${searchQuery}"` : 'No active browser tabs found'}
+            </div>
+            {!searchQuery && (
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Open TabPilot via the Chrome toolbar icon to scrape tabs, or load unpacked in chrome://extensions.
+              </p>
+            )}
           </div>
         ) : (
           filteredTabs.map((tab) => (

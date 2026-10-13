@@ -2,6 +2,7 @@ import type { BrowserTab, SessionRestoreOptions } from './types';
 
 export type ExtensionMessageType =
   | 'QUERY_TABS'
+  | 'GET_ALL_WINDOWS'
   | 'ACTIVATE_TAB'
   | 'CLOSE_TABS'
   | 'MOVE_TABS'
@@ -79,8 +80,14 @@ export type TriggerSyncMessage = BaseExtensionMessage<
   Record<string, never>
 >;
 
+export type GetAllWindowsMessage = BaseExtensionMessage<
+  'GET_ALL_WINDOWS',
+  Record<string, never> | void
+>;
+
 export type ExtensionMessage =
   | QueryTabsMessage
+  | GetAllWindowsMessage
   | ActivateTabMessage
   | CloseTabsMessage
   | MoveTabsMessage

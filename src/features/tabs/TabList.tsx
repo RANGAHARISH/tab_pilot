@@ -15,6 +15,9 @@ interface TabListProps {
   onSaveSession: (tabIds: number[]) => void;
   onGroupTabs: (tabIds: number[]) => void;
   onRefresh?: () => void;
+  isExtensionActive?: boolean;
+  isDemoMode?: boolean;
+  onToggleDemoMode?: () => void;
 }
 
 export function TabList({
@@ -26,6 +29,9 @@ export function TabList({
   onSaveSession,
   onGroupTabs,
   onRefresh,
+  isExtensionActive,
+  isDemoMode,
+  onToggleDemoMode,
 }: TabListProps) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [isConfirmCloseOpen, setIsConfirmCloseOpen] = useState(false);
@@ -62,6 +68,18 @@ export function TabList({
   };
 
   if (tabs.length === 0) {
+    if (!isExtensionActive && !isDemoMode) {
+      return (
+        <EmptyState
+          icon={Layers}
+          title="No live browser tabs detected"
+          description="Websites hosted on the internet cannot scrape or access open browser windows due to browser security sandboxes. Load the extension in chrome://extensions to manage your real tabs, or test the UI with sample demo tabs."
+          actionText={onToggleDemoMode ? "Explore Demo Tabs" : "Refresh Tabs"}
+          onAction={onToggleDemoMode || onRefresh}
+        />
+      );
+    }
+
     return (
       <EmptyState
         icon={Layers}

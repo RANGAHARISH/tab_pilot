@@ -187,18 +187,27 @@ export function OverviewPage({
             </button>
           </div>
 
-          <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
-            {openTabs.slice(0, 6).map((tab) => (
-              <TabRow
-                key={tab.id}
-                tab={tab}
-                isSelected={false}
-                onSelectToggle={() => {}}
-                onActivate={onActivateTab}
-                onClose={onCloseTab}
-              />
-            ))}
-          </div>
+          {openTabs.length === 0 ? (
+            <div className="p-6 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center space-y-1.5">
+              <p className="text-xs text-slate-400">No active browser tabs found.</p>
+              <p className="text-[11px] text-slate-500">
+                Load the TabPilot extension in Chrome to scrape and organize live tabs across windows.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
+              {openTabs.slice(0, 6).map((tab) => (
+                <TabRow
+                  key={tab.id}
+                  tab={tab}
+                  isSelected={false}
+                  onSelectToggle={() => {}}
+                  onActivate={onActivateTab}
+                  onClose={onCloseTab}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

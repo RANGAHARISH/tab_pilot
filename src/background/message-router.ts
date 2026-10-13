@@ -59,6 +59,9 @@ export class MessageRouter {
       case 'QUERY_TABS':
         return tabService.getOpenTabs(msg.payload);
 
+      case 'GET_ALL_WINDOWS':
+        return tabService.getAllWindows();
+
       case 'ACTIVATE_TAB':
         return tabService.activateTab(msg.payload.tabId, msg.payload.windowId);
 

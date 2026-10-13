@@ -69,6 +69,34 @@ export class TabService {
   async restoreRecentlyClosed(sessionId: string): Promise<void> {
     await this.adapter.restoreRecentlyClosed(sessionId);
   }
+
+  async getAllWindows(): Promise<chrome.windows.Window[]> {
+    if (this.adapter.getAllWindows) {
+      return this.adapter.getAllWindows();
+    }
+    return [];
+  }
+
+  setDemoMode(enabled: boolean): void {
+    if (this.adapter.setDemoMode) {
+      this.adapter.setDemoMode(enabled);
+    }
+  }
+
+  getDemoMode(): boolean {
+    if (this.adapter.getDemoMode) {
+      return this.adapter.getDemoMode();
+    }
+    return false;
+  }
+
+  isExtensionAvailable(): boolean {
+    if (this.adapter.isAvailable) {
+      return this.adapter.isAvailable();
+    }
+    return false;
+  }
 }
 
 export const tabService = new TabService();
+
