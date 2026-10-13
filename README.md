@@ -1,114 +1,139 @@
-# TabPilot (Smart Tab & Session Organizer)
+# TabPilot 🧭
 
-TabPilot is a production-quality Chrome Manifest V3 browser extension built with React, TypeScript, and Tailwind CSS. It is designed to be local-first, privacy-conscious, and blazing fast with hundreds of open tabs.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Manifest V3](https://img.shields.io/badge/Chrome_Extension-Manifest_V3-green.svg)](https://developer.chrome.com/docs/extensions/mv3/intro/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://reactjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38b2ac.svg)](https://tailwindcss.com/)
 
-## Key Features
+> **Production-quality, privacy-conscious AI tab organizer, session restore, workspace manager, and duplicate tab cleaner browser extension.**
 
-- **Live Tab Management**: Real-time overview of tabs across browser windows, multi-select, batch actions, search, pin/unpin, and native Chrome tab grouping.
-- **Saved Sessions**: Snapshot open windows and workspaces into named sessions. Preview session tabs, restore with progress reporting, and prevent duplicate tab creation.
-- **Custom Workspaces**: Organize tabs and sessions into distinct workspaces (e.g. Work, Research, Personal) with custom colors and default settings.
-- **Duplicate Tab Detection**: Conservative, reliable URL normalization that distinguishes exact duplicates from distinct pages (preserving distinguishing query parameters), with transparent retention rules and safe batch closure.
-- **Unified Search**: Search across open tabs, saved collections, sessions, and workspaces with tokenization and filters (domain, workspace, type).
-- **Recently Closed Recovery**: Direct integration with `chrome.sessions` to recover recently closed tabs and windows where supported.
-- **Local-First & Offline**: Durable IndexedDB persistence (`TabPilotDB`) with versioned migrations and soft-delete tombstones; functions completely offline with zero accounts required.
-- **Optional Supabase Cloud Sync**: Explicit opt-in synchronization with Supabase Auth, PostgreSQL Row Level Security (RLS), versioned conflict detection, and transactional sync queues.
-- **Optional AI Organization & Summaries**: Smart group recommendations and page content summaries with strict schema validation, confidence indicators, rate limiting, and reliable deterministic fallbacks.
-- **Import & Export**: Full JSON export and schema-validated import for backup, migration, and portability.
+TabPilot helps you organize open tabs across windows, snapshot and restore sessions safely, manage multiple workspaces, search your browsing history, detect duplicate tabs, and optionally cluster tabs or summarize pages using AI.
 
-## Extension Architecture
+---
+
+## 🚀 Key Features
+
+- **⚡ Live Tab Management**: Real-time overview of tabs across browser windows, multi-select, batch actions, search, pin/unpin, and native Chrome tab grouping.
+- **💾 Saved Sessions**: Snapshot open windows and workspaces into named sessions. Preview session tabs, restore with progress reporting, and prevent duplicate tab creation.
+- **📁 Custom Workspaces**: Organize tabs and sessions into distinct workspaces (e.g. Work, Research, Personal) with custom colors and default settings.
+- **🔍 Smart Duplicate Tab Detection**: Conservative, reliable URL normalization that distinguishes exact duplicates from distinct pages (preserving distinguishing query parameters `id`, `v`, `q`), with transparent retention rules (`keep-active`, `keep-oldest`, `keep-newest`) and pinned tab protection.
+- **🔎 Unified Search**: Search across open tabs, saved collections, sessions, and workspaces with tokenization and filters.
+- **🕒 Recently Closed Recovery**: Direct integration with `chrome.sessions` to recover recently closed tabs and windows.
+- **🔒 Local-First & Privacy-Focused**: Durable IndexedDB persistence (`TabPilotDB`) with versioned migrations and soft-delete tombstones. Functions completely offline with zero accounts required.
+- **☁️ Optional Cloud Sync**: Explicit opt-in synchronization with Supabase Auth, PostgreSQL Row Level Security (RLS), versioned conflict detection, and transactional sync queues.
+- **🤖 Optional AI Organization & Summaries**: Smart group recommendations and page content summaries with strict schema validation, confidence indicators, and reliable deterministic offline fallbacks.
+- **📦 Import & Export**: Full JSON export and schema-validated import for backup, migration, and portability.
+
+---
+
+## 🛠️ Tech Stack & Architecture
 
 ```
 src/
-├── background/         # Service worker, message router, tab event listeners
+├── background/         # Manifest V3 service worker, message router, tab event listeners
 ├── popup/              # Compact browser action popup (400x580 max)
 ├── dashboard/          # Full-page organizer dashboard
-├── components/         # Accessible UI components (AppShell, TabRow, etc.)
+├── components/         # Accessible UI components (AppShell, TabRow, ConfirmDialog, etc.)
 ├── features/           # Feature modules (tabs, sessions, workspaces, duplicates, AI)
-├── services/           # Core business logic (TabService, SyncService, etc.)
-├── adapters/           # Testable abstraction layer (Chrome, IndexedDB, Supabase, AI)
-├── domain/             # Strict types, Zod schemas, errors, runtime events
+├── services/           # Core domain logic (TabService, SessionService, DuplicateService, etc.)
+├── adapters/           # Abstraction layer (ChromeTabs, IndexedDB, Supabase, AI)
+├── domain/             # Strict TypeScript types, Zod schemas, errors, runtime events
 ├── lib/                # URL normalization, permissions, date utils, logger
 └── styles/             # Design tokens and Tailwind directives
 ```
 
-## Getting Started
+---
+
+## 🏁 Getting Started
 
 ### Prerequisites
-- Node.js >= 18.x (tested on Node v20/v24)
-- npm >= 9.x
+- [Node.js](https://nodejs.org/) (v18, v20, or v24 recommended)
+- `npm` (v9 or higher)
 
 ### Installation
 
 ```bash
-# Clone the repository and install dependencies
+# 1. Clone the repository
+git clone https://github.com/RANGAHARISH/tab_pilot.git
+cd tab_pilot
+
+# 2. Install dependencies
 npm install
+
+# 3. Build the Chrome extension
+npm run build:extension
 ```
 
-### Development
+This outputs the compiled extension to the `dist/` directory.
 
-To run the Vite development server with Hot Module Replacement:
+---
+
+## 🧩 Loading into Chrome, Edge, or Brave
+
+1. Open your browser and go to `chrome://extensions` (or `edge://extensions`).
+2. Enable **Developer mode** using the toggle in the upper-right corner.
+3. Click **Load unpacked**.
+4. Select the `dist/` folder from this repository.
+5. TabPilot is now ready to use!
+   - Click the extension icon in the toolbar or press `Ctrl+Shift+E` (`Command+Shift+E`) to open the popup.
+   - Press `Ctrl+Shift+S` (`Command+Shift+S`) to quick-save your current window's session.
+   - Click **Open Full Dashboard** to access the complete management suite.
+
+---
+
+## 🖥️ Local Interactive Preview
+
+You can also run TabPilot in standalone browser preview mode:
+
 ```bash
 npm run dev
 ```
 
-### Production Build
+Visit [http://localhost:5173/](http://localhost:5173/) to explore the preview portal, full dashboard (`/dashboard.html`), and extension popup preview (`/popup.html`).
 
-To build the unpacked Chrome extension:
+---
+
+## 🧪 Testing & Quality Assurance
+
+TabPilot includes a comprehensive automated test suite with unit, component, integration, and E2E manifest tests:
+
 ```bash
-npm run build:extension
-```
-This bundles the popup, dashboard, and background service worker into the `dist/` directory and copies `manifest.json` and icons.
-
-### Loading Unpacked in Chrome or Edge
-
-1. Open Google Chrome or Microsoft Edge.
-2. Navigate to `chrome://extensions` (or `edge://extensions`).
-3. Toggle **Developer mode** in the top right.
-4. Click **Load unpacked**.
-5. Select the `dist/` folder in this repository.
-6. The TabPilot icon will appear in your extension toolbar. Click it to open the popup, or open `chrome-extension://<EXTENSION_ID>/dashboard.html` for the full dashboard.
-
-### Packaging for Release
-
-To produce a clean ZIP archive ready for Chrome Web Store or Edge Add-ons submission:
-```bash
-npm run package:extension
-```
-The output file `tabpilot-extension.zip` will be generated in the root directory.
-
-## Testing & Quality Assurance
-
-Run the test suite:
-```bash
-# Unit & integration tests via Vitest
+# Run Vitest test suite (47 tests across 15 test suites)
 npm test
 
-# Type checking via TypeScript
+# Run TypeScript type check
 npm run typecheck
 
-# Code style and linting
+# Run ESLint
 npm run lint
 
-# End-to-end tests via Playwright
-npm run test:e2e
+# Package extension into release ZIP
+npm run package:extension
 ```
 
-## Configuration & Optional Services
+---
 
-All core functionality works locally without any configuration or external accounts.
+## ⌨️ Keyboard Shortcuts
 
-### Optional Supabase Cloud Sync
-Copy `.env.example` to `.env` and fill in:
-```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
-Database migrations are located in `backend_optional/supabase/migrations/`.
+| Shortcut | Action | Scope |
+| :--- | :--- | :--- |
+| `Ctrl+Shift+E` / `Cmd+Shift+E` | Open TabPilot popup | Browser-wide |
+| `Ctrl+Shift+S` / `Cmd+Shift+S` | Quick-save active window session | Browser-wide |
+| `/` | Focus search bar | Dashboard / Popup |
+| `Esc` | Close modal / clear selection | Active view |
 
-### Optional AI Provider
-AI functions can be deployed to Supabase Edge Functions or configured via server-side endpoint. See `backend_optional/supabase/functions/` for implementation details.
+---
 
-## License & Policies
+## 🤝 Contributing
 
-- Privacy Policy: See [PRIVACY.md](./PRIVACY.md)
-- Security Policy: See [SECURITY.md](./SECURITY.md)
+Contributions, feedback, and pull requests are warmly welcomed! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on code style, testing, and contribution guidelines.
+
+---
+
+## 📄 License & Policies
+
+- **License**: [MIT License](./LICENSE)
+- **Privacy Policy**: [PRIVACY.md](./PRIVACY.md)
+- **Security Policy**: [SECURITY.md](./SECURITY.md)
+- **Changelog**: [CHANGELOG.md](./CHANGELOG.md)
