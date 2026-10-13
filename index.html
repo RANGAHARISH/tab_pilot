@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TabPilot - Local Preview</title>
+    <link rel="icon" type="image/svg+xml" href="/extension/icons/icon.svg" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-6 font-sans antialiased">
+    <div class="max-w-xl w-full bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-8 space-y-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-white">TabPilot Extension Preview</h1>
+          <p class="text-sm text-slate-400">Local development &amp; interactive preview server</p>
+        </div>
+      </div>
+
+      <p class="text-sm text-slate-300 leading-relaxed">
+        TabPilot is a Chrome Manifest V3 extension. Below you can open and test the full dashboard interface and the extension popup view directly in your browser.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+        <a
+          href="/dashboard.html"
+          class="flex flex-col p-4 bg-slate-700/60 hover:bg-slate-700 border border-slate-600 hover:border-blue-500 rounded-xl transition-all group"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-white group-hover:text-blue-400 flex items-center gap-1.5">
+              Full Dashboard
+            </span>
+            <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-medium">Primary UI</span>
+          </div>
+          <p class="text-xs text-slate-400">
+            Sessions, workspaces, duplicate tab reviewer, AI clustering, bookmarks, and settings.
+          </p>
+        </a>
+
+        <a
+          href="/popup.html"
+          class="flex flex-col p-4 bg-slate-700/60 hover:bg-slate-700 border border-slate-600 hover:border-blue-500 rounded-xl transition-all group"
+        >
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-white group-hover:text-blue-400 flex items-center gap-1.5">
+              Popup View
+            </span>
+            <span class="text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-medium">Action</span>
+          </div>
+          <p class="text-xs text-slate-400">
+            The compact browser action popup (400px width) for quick tab search &amp; saving.
+          </p>
+        </a>
+      </div>
+
+      <div class="border-t border-slate-700/80 pt-5 space-y-3">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Loading as Chrome Extension</h2>
+        <ol class="text-xs text-slate-300 space-y-1.5 list-decimal list-inside">
+          <li>Open Chromium/Chrome at <code class="text-blue-400 bg-slate-900 px-1.5 py-0.5 rounded">chrome://extensions</code></li>
+          <li>Turn on <strong class="text-slate-200">Developer mode</strong> (top right)</li>
+          <li>Click <strong class="text-slate-200">Load unpacked</strong> and select the directory:
+            <div class="mt-1 p-2 bg-slate-950 rounded font-mono text-[11px] text-emerald-400 select-all border border-slate-800">
+              /config/antigravity/splendid-carson/dist
+            </div>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </body>
+</html>

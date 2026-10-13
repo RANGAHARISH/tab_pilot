@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "TabPilot - Smart Tab & Session Manager",
+  "version": "1.0.0",
+  "description": "Production-quality AI-powered tab manager, session restorer, workspace organizer, and duplicate tab detector.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "tabGroups",
+    "sessions"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "TabPilot",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "options_ui": {
+    "page": "dashboard.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
+      },
+      "description": "Open TabPilot popup"
+    },
+    "save_session": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Quick-save current session"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  }
+}
